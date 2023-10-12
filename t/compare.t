@@ -13,8 +13,8 @@ open my $fh, '<', 't/resources/powerset' or die "could not read powerset: $!";
 while(defined(my $combo = <$fh>))
 {
     chomp($combo);
-    my @expect_cmd = ('perl',              "-C$combo", 't/resources/script.pl', 'æøå');
-    my @actual_cmd = ('perl', "-Mlib=.", "-MC=$combo", 't/resources/script.pl', 'æøå');
+    my @expect_cmd = ('perl',                "-C$combo", 't/resources/script.pl', 'æøå');
+    my @actual_cmd = ('perl', "-Mlib=lib", "-MC=$combo", 't/resources/script.pl', 'æøå');
 
     my ($in, $out, $err) = ('')x3;
     seek($stdin, 0, 0);
