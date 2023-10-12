@@ -10,7 +10,7 @@ $ perl -e 'print $_, length for @ARGV' æøå
 easy fix using the -C flag:
 
 ```sh
-$ perl -CSiA -e 'print $_, length for @ARGV' æøå
+$ perl -CSDA -e 'print $_, length for @ARGV' æøå
 æøå3
 ```
 
@@ -33,7 +33,7 @@ instead:
 
 ```perl
 #!/usr/bin/env perl
-use C 'SiA';
+use C 'SDA';
 print $_, length for @ARGV;
 ```
 
