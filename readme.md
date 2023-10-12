@@ -51,7 +51,7 @@ use C 'SD';
 print $C::UNICODE; # 31
 ```
 
-calling `use C` with a numberic value, will attempt to load a specific version
+calling `use C` with a numeric value, will attempt to load a specific version
 of the module, rather than setting the flag to the given value. you should
 combine letters to get the desired value instead:
 
