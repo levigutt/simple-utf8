@@ -17,7 +17,7 @@ $ perl -C63 -e 'print $_, length for @ARGV' æøå
 which is roughly the equivalent of this:
 
 ```perl
-#/usr/bin/perl
+#/usr/bin/env perl
 use open IO =>  ':utf8';
 binmode STDIN,  ':utf8';
 binmode STDOUT, ':utf8';
@@ -32,7 +32,7 @@ this modules simulates the behaviour of the -C  flag, letting you do this
 instead:
 
 ```perl
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use C '63';
 print $_, length for @ARGV;
 ```
