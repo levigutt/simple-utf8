@@ -8,17 +8,14 @@ our $UNICODE  = 95;
 our $SET_UTF8 = 1;
 our $ENCODING = 'UTF-8'; # better than utf8
 
-# intended to simulate the same behaviour as the -C flag on the command line
-# -C63 sets utf8 for STDIN, STDOUT, STDERR, default filehandles, and decodes @ARGV as utf8
-# -MC=63 does the same
-# after using -C, the flags can be read from ${^UNICODE}
-# after using -MC, the flags can be read from $C::UNICODE
 sub import
-{   $UNICODE = process_args(@_);
+{
+    $UNICODE = process_args(@_);
     $SET_UTF8 = is_locale_utf8();
 
     if( $SET_UTF8 )
-    {   $UNICODE & 1   and binmode STDIN,  ":encoding($ENCODING)";
+    {
+        $UNICODE & 1   and binmode STDIN,  ":encoding($ENCODING)";
         $UNICODE & 2   and binmode STDOUT, ":encoding($ENCODING)";
         $UNICODE & 4   and binmode STDERR, ":encoding($ENCODING)";
         $UNICODE & 32  and @ARGV = map { decode $ENCODING, $_; } @ARGV;
@@ -27,20 +24,25 @@ sub import
 }
 
 FILTER
-{   if( $SET_UTF8 )
-    {   s/^/use open IN  => ':encoding($ENCODING)';\n/ if $UNICODE & 8;
+{
+    if( $SET_UTF8 )
+    {
+        s/^/use open IN  => ':encoding($ENCODING)';\n/ if $UNICODE & 8;
         s/^/use open OUT => ':encoding($ENCODING)';\n/ if $UNICODE & 16;
     }
 };
 
 sub process_args
-{   local (undef, $_) = @_;
+{
+    local (undef, $_) = @_;
     my $flags;
     if( /^[0-9]+$/ )
-    {   $flags = 0+$_;
+    {
+        $flags = 0+$_;
     }
     else
-    {   $flags = 0;
+    {
+        $flags = 0;
         my %letters = (     I => 1      # STDIN
                       ,     O => 2      # STDOUT
                       ,     E => 4      # STDERR
@@ -53,22 +55,25 @@ sub process_args
                       ,     a => 256    # debug mode for UTF-8 caching
                       );
         for (split//)
-        {   carp "Unknown Unicode option letter '$_'." and exit 1 unless exists $letters{$_};
+        {
+            unless( exists $letters{$_} )
+            {
+                carp "Unknown Unicode option letter '$_'." and exit 1;
+            }
             $flags |= $letters{$_};
         }
     }
     return $flags;
 }
 
-# conditional IOEioA - only set utf8 if system locale indicated utf8
 sub is_locale_utf8
-{   return 1 unless $UNICODE & 64;
-
-    # also check LC_TYPE LANGUAGE?
+{
+    return 1 unless $UNICODE & 64;
     for (qw<LC_ALL LC_CTYPE LANG>)
-    {   next  unless exists $ENV{$_};
-        # checking for en_US.UTF-8, en_US.utf8, or similar
-        return 1 if 0 <= index($ENV{$_}, 'UTF-8') || 0 <= index($ENV{$_}, 'utf8');
+    {
+        next  unless exists $ENV{$_};
+        return 1 if 0 <= index($ENV{$_}, 'UTF-8')
+                 || 0 <= index($ENV{$_}, 'utf8');
     }
     return 0;
 }
