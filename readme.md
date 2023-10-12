@@ -39,7 +39,7 @@ print $_, length for @ARGV;
 
 ## WHY?
 
-becuase life is too short.
+because life is too short.
 
 ## CAVEATS
 
@@ -56,8 +56,10 @@ of the module, rather than setting the flag to the given value. you should
 combine letters to get the desired value instead:
 
 ```perl
-use C 3;    # bad
-use C 'IO'; # good
+use C 3;     # bad
+use C '3';   # also bad
+use C qw<3>; # works..
+use C 'IO';  # best
 ```
 
 the `${^OPEN}` variable cannot be set at runtime, any code that depend on this
