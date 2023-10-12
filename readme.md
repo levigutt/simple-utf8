@@ -23,7 +23,7 @@ binmode STDIN,  ':utf8';
 binmode STDOUT, ':utf8';
 binmode STDERR, ':utf8';
 use Encode qw<decode>;
-@ARGV = map { decode 'utf8', $_ } @ARGV
+BEGIN { @ARGV = map { decode 'utf8', $_ } @ARGV }
 
 print $_, length for @ARGV;
 ```
