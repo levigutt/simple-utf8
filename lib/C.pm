@@ -1,25 +1,42 @@
 package C;
 use strict;
-use Encode qw<decode>;
+use Encode ();
 use Filter::Simple;
-use Carp;
 
-our $UNICODE  = 95;
+our $UNICODE  = 95; # defaults to -CSDL
+our $OPEN;
 our $SET_UTF8 = 1;
-our $ENCODING = 'UTF-8'; # better than utf8
+our $ENCODING = ':encoding(UTF-8)';
+
+
+# process version as option
+sub VERSION
+{
+    my (undef, $option) = @_;
+    $UNICODE = _process_args($option);
+}
 
 sub import
 {
-    $UNICODE = process_args(@_);
-    $SET_UTF8 = is_locale_utf8();
+    my (undef, $option) = @_;
+    $UNICODE  = _process_args($option) if defined $option;
+    $SET_UTF8 = !($UNICODE & 64) || !!${^UTF8LOCALE};
 
     if( $SET_UTF8 )
     {
-        $UNICODE & 1   and binmode STDIN,  ":encoding($ENCODING)";
-        $UNICODE & 2   and binmode STDOUT, ":encoding($ENCODING)";
-        $UNICODE & 4   and binmode STDERR, ":encoding($ENCODING)";
-        $UNICODE & 32  and @ARGV = map { decode $ENCODING, $_; } @ARGV;
+        $UNICODE &  1 and binmode STDIN,  $ENCODING;
+        $UNICODE &  2 and binmode STDOUT, $ENCODING;
+        $UNICODE &  4 and binmode STDERR, $ENCODING;
+        if( '-e' eq $0 )
+        {
+            require "open.pm";
+            open::import(IN  => $ENCODING) if $UNICODE & 8;
+            open::import(OUT => $ENCODING) if $UNICODE & 16;
+        }
+        $UNICODE & 32 and @ARGV = map { Encode::decode 'UTF-8', $_, Encode::FB_CROAK } @ARGV;
+        $OPEN = "$ENCODING\0$ENCODING";
     }
+    $UNICODE & 128 and utf8::decode($_) for @ARGV;
     $UNICODE & 256 and ${^UTF8CACHE} = -1;
 }
 
@@ -27,18 +44,20 @@ FILTER
 {
     if( $SET_UTF8 )
     {
-        s/^/use open IN  => ':encoding($ENCODING)';\n/ if $UNICODE & 8;
-        s/^/use open OUT => ':encoding($ENCODING)';\n/ if $UNICODE & 16;
+        $_ = "use open IN  => '$ENCODING';" . $_ if $UNICODE & 8;
+        $_ = "use open OUT => '$ENCODING';" . $_ if $UNICODE & 16;
     }
 };
 
-sub process_args
+sub _process_args
 {
-    local (undef, $_) = @_;
+    my ($option) = @_;
     my $flags;
-    if( /^[0-9]+$/ )
+    if( $option =~ /^\d+$/ )
     {
-        $flags = 0+$_;
+        $flags = 0+$option;
+        my $invalid = $flags & ~511;
+        warn "Unknown Unicode option value $invalid.\n" and exit 29 if $invalid;
     }
     else
     {
@@ -52,30 +71,19 @@ sub process_args
                       ,     D => 24     # i + o
                       ,     A => 32     # @ARGV
                       ,     L => 64     # conditional IOEioA
+                     #,     W => 128    # ...
                       ,     a => 256    # debug mode for UTF-8 caching
                       );
-        for (split//)
+        for (split//,$option)
         {
             unless( exists $letters{$_} )
             {
-                carp "Unknown Unicode option letter '$_'." and exit 1;
+                warn "Unknown Unicode option letter '$_'.\n" and exit 29;
             }
             $flags |= $letters{$_};
         }
     }
     return $flags;
-}
-
-sub is_locale_utf8
-{
-    return 1 unless $UNICODE & 64;
-    for (qw<LC_ALL LC_CTYPE LANG>)
-    {
-        next  unless exists $ENV{$_};
-        return 1 if 0 <= index($ENV{$_}, 'UTF-8')
-                 || 0 <= index($ENV{$_}, 'utf8');
-    }
-    return 0;
 }
 
 1;

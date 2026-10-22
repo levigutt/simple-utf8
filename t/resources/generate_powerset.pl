@@ -1,26 +1,21 @@
-#!/usr/bin/env perl
+#!/usr/bin/env perl -wl
 use strict;
-use warnings;
-use feature qw<say>;
 use List::PowerSet 'powerset_lazy';
 
-
-my @options = [qw< I O E S i o D A L >];
-my %hash;
-for my $v (@options) {
-    my $ps = powerset_lazy(@$v);
-    while (my $set = $ps->()) {
-        my $str = join '', @$set;
-        next if $hash{$str}++;
-        #print "$str\n";
-    }
+my @options = qw< I O E S i o D A L a >;
+my $ps = powerset_lazy(@options);
+my %seen;
+while (my $set = $ps->()) {
+    my $str = join '', @$set;
+    $seen{$str}++;
 }
 
+print for 0 .. 512;
+print "X";
 
-
-say for grep { length }
-        map { $_->[1] }
-        sort { $a->[0] <=> $b->[0] }
-        map { [length, $_] }
-        keys %hash;
-
+print for map  { $_->[1]                }
+          sort { $a->[0] <=> $b->[0]
+              || $a->[1] cmp $b->[1]    }
+          map  { [length, $_]           }
+          grep { length                 }
+          keys %seen;

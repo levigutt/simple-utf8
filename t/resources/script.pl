@@ -1,18 +1,16 @@
 #!/usr/bin/env perl
 use strict;
-no warnings qw<utf8>; # silence 'Wide character in print' warnings
+use warnings;
 while(<STDIN>)
 {
-    chomp;
     print $ARGV[0], length $ARGV[0];
     print $_, length;
-    warn $_, length, "\n";
-    open my $fh, '<', 't/resources/unicode-string';
+    warn $_, length;
+    open my $fh, '<', 't/resources/unicode-string' or die $$;
     while(<$fh>)
     {
-        chomp;
         print $_, length;
-        warn $_, length, "\n";
+        warn $_, length;
     }
 }
 print defined $C::UNICODE ? $C::UNICODE : ${^UNICODE};

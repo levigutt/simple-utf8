@@ -4,34 +4,42 @@ use warnings;
 use utf8;
 use Test::More;
 use IPC::Run3;
-use feature qw<say>;
 
-my $testfile = 't/resources/unicode-string';
-open my $stdin, '<', $testfile or die "couldn't open filehandle to $testfile";
+my @all_options = do {
+    open my $fh, '<', 't/resources/powerset' or die $!;
+    <$fh>
+};
+chomp @all_options;
 
-open my $fh, '<', 't/resources/powerset' or die "could not read powerset: $!";
-while(defined(my $combo = <$fh>))
+my %test =  (   file      => 't/resources/unicode-string'
+            ,   script    => 't/resources/script.pl'
+            ,   arguments => ['æøå']
+            ,   options   => \@all_options
+            );
+
+for my $option ($test{options}->@*)
 {
-    chomp($combo);
-    my @expect_cmd = ('perl',                "-C$combo", 't/resources/script.pl', 'æøå');
-    my @actual_cmd = ('perl', "-Mlib=lib", "-MC=$combo", 't/resources/script.pl', 'æøå');
+    my @expect_cmd = ('perl',          "-C$option",   $test{script}, $test{arguments});
+    my @actual_cmd = ('perl', "-Ilib", "-MC=$option", $test{script}, $test{arguments});
 
-    my ($in, $out, $err) = ('')x3;
+    open my $stdin, '<', $test{file} or die $!;
+    my ($expect_out, $expect_err);
+    my $success = run3 \@expect_cmd, $stdin, \$expect_out, \$expect_err;
+
     seek($stdin, 0, 0);
-    run3 \@expect_cmd, $stdin, \$out, \$err;
-    chomp($err);
-    my $expect_out = join'',split/\n/,$out // '';
-    my $expect_err = join'',split/\n/,$err // '';
+    my ($actual_out, $actual_err) = ('')x3;
+    run3 \@actual_cmd, $stdin, \$actual_out, \$actual_err;
 
-    ($in, $out, $err) = ('')x3;
-    seek($stdin, 0, 0);
-    run3 \@actual_cmd, $stdin, \$out, \$err;
-    chomp($err);
-    my $actual_out = join'',split/\n/,$out // '';
-    my $actual_err = join'',split/\n/,$err // '';
+    is($actual_out, $expect_out, "STDOUT for $option with file $test{file}");
+    is($actual_err, $expect_err, "STDERR for $option with file $test{file}");
 
-    is($actual_out, $expect_out, "-MC=$combo has same stdout as -C$combo");
-    is($actual_err, $expect_err, "-MC=$combo has same stderr as -C$combo");
+    # run3 does not preserve exit codes, so we test them with system
+    if ( !$success ) {
+        my $expect_exit = system @expect_cmd;
+        my $actual_exit = system @actual_cmd;
+        is ( $actual_exit, $expect_exit, "EXIT CODE for $option with file $test{file}");
+    }
 }
+
 
 done_testing;
