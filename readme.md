@@ -98,7 +98,7 @@ BEGIN { @ARGV = map { decode('UTF-8', $_, Encode::FB_CROAK) } @ARGV }
 
 `-C` is very neat for one-liner, but this is not.
 
-Although we can be shortened it with `use open ':std'`, it still wont be
+Although we can shorten it with `use open ':std'`, it still wont be
 practical to write on the command line:
 
 ```sh
@@ -107,7 +107,7 @@ perl -Mopen=:std,IO,:encoding\(UTF-8\) -MEncode=decode,FB_CROAK -e 'BEGIN { @ARG
 
 ## THE NEW SOLUTION (THIS MODULE)
 
-This modules simulates the behaviour of the `-C`  flag, letting you do this
+This module simulates the behaviour of the `-C`  flag, letting you do this
 instead:
 
 ```perl
@@ -116,7 +116,7 @@ use C 'SDA';
 ...
 ```
 
-And it's very suitable for one-liners, with familiar syntax:
+And it's very suitable for one-liners, with somewhat familiar syntax:
 
 ```sh
 perl -MC=SDA -e '...'
@@ -160,4 +160,3 @@ To ensure these values can be inspected at runtime, this module sets
 
 `-C` sets `${^OPEN}` to `:utf8\0:utf8`, but we must naturally set `$C::OPEN` to
 `:encoding(UTF-8)\0:encoding(UTF-8)` to reflect the actual encoding used.
-
